@@ -10,7 +10,7 @@
 # See /LICENSE for more information.
 #
 
-name: Build jcg-q30pro
+name: Build 360T7 LatestSSRPlus-Xray-libev
 
 on:
   repository_dispatch:
@@ -20,9 +20,9 @@ env:
   REPO_URL: https://github.com/ATang007ZH/immortalwrt-mt798x
   REPO_BRANCH: openwrt-21.02
   FEEDS_CONF: feeds.conf.default
-  CONFIG_FILE: jcg-q30pro.config
+  CONFIG_FILE: 360t7+ssr+libev+xray.config
   DIY_P1_SH: diy-part1.sh
-  DIY_P2_SH: diy-part2-6-254.sh
+  DIY_P2_SH: diy-part2-6-1.sh
   UPLOAD_BIN_DIR: false
   UPLOAD_FIRMWARE: true
   UPLOAD_RELEASE: true
@@ -65,10 +65,19 @@ jobs:
         $GITHUB_WORKSPACE/$DIY_P1_SH
 
     - name: Update feeds
-      run: cd openwrt && ./scripts/feeds update -a
+      run: |
+        cd openwrt && ./scripts/feeds update -a
+        git clone -b master --single-branch https://github.com/immortalwrt/packages.git packages_master
+        rm -rf ./feeds/packages/lang/golang
+        mv ./packages_master/lang/golang ./feeds/packages/lang
+        rm -rf ./packages_master
 
     - name: Install feeds
-      run: cd openwrt && ./scripts/feeds install -a
+      run: |
+        cd openwrt && ./scripts/feeds install -a
+        rm -rf feeds/packages/net/{xray-core,v2ray-core,v2ray-geodata,sing-box}
+        rm -rf package/helloworld
+        git clone --depth=1 https://github.com/fw876/helloworld package/helloworld
 
     - name: Load custom configuration
       run: |
@@ -141,7 +150,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         tag_name: ${{ steps.tag.outputs.release_tag }}
-        body_path: release.txt
+        body_path: release-ssrp.txt
         files: ${{ env.FIRMWARE }}/*
 
     - name: Delete workflow runs
@@ -154,7 +163,7 @@ jobs:
       uses: dev-drprasad/delete-older-releases@master
       if: env.UPLOAD_RELEASE == 'true' && !cancelled()
       with:
-        keep_latest: 3
+        keep_latest: 5
         delete_tags: true
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
