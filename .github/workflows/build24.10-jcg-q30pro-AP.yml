@@ -10,19 +10,19 @@
 # See /LICENSE for more information.
 #
 
-name: Build JCG Q30PRO Latest Passwall+Xray
+name: Build immortalwrt24.10 AP JCG-Q30Pro
 
 on:
   repository_dispatch:
   workflow_dispatch:
 
 env:
-  REPO_URL: https://github.com/padavanonly/immortalwrt-mt798x-23.05
-  REPO_BRANCH: openwrt-23.05
+  REPO_URL: https://github.com/padavanonly/immortalwrt-mt798x-24.10
+  REPO_BRANCH: 2410
   FEEDS_CONF: feeds.conf.default
-  CONFIG_FILE: jcg-q30pro-pw+xray.config
+  CONFIG_FILE: 2410-jcg-q30pro-ap.config
   DIY_P1_SH: diy-part1.sh
-  DIY_P2_SH: diy-part2-6-1-pw.sh
+  DIY_P2_SH: 2410-diy-part2-6-254-ap.sh
   UPLOAD_BIN_DIR: false
   UPLOAD_FIRMWARE: true
   UPLOAD_RELEASE: true
@@ -68,25 +68,13 @@ jobs:
       run: |
          cd openwrt
          ./scripts/feeds update -a 
-         git clone -b master --single-branch https://github.com/immortalwrt/packages.git packages_master
-         rm -rf ./feeds/packages/lang/golang
-         mv ./packages_master/lang/golang ./feeds/packages/lang
-         rm -rf ./packages_master
 
 
     - name: Install feeds
       run: |
         cd openwrt && ./scripts/feeds install -a
-        rm -rf feeds/luci/applications/luci-app-passwall/
-        rm -rf feeds/packages/net/xray-core/
-        rm -rf feeds/packages/net/xray-plugin/
-        rm -rf feeds/packages/net/chinadns-ng/
-        rm -rf feeds/packages/net/sing-box/
-        rm -rf feeds/packages/net/hysteria/
-        rm -rf feeds/packages/net/shadowsocksr-libev/
-        git clone https://github.com/xiaorouji/openwrt-passwall package/luci-app-passwall
-        git clone https://github.com/xiaorouji/openwrt-passwall-packages package/luci-app-passwall-packages
-         
+
+
     - name: Load custom configuration
       run: |
         [ -e files ] && mv files openwrt/files
@@ -152,13 +140,13 @@ jobs:
         echo "status=success" >> $GITHUB_OUTPUT
 
     - name: Upload firmware to release
-      uses: softprops/action-gh-release@v2
+      uses: softprops/action-gh-release@master
       if: steps.tag.outputs.status == 'success' && !cancelled()
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         tag_name: ${{ steps.tag.outputs.release_tag }}
-        body_path: release.txt
+        body_path: 2410-release-ap.txt
         files: ${{ env.FIRMWARE }}/*
 
     - name: Delete workflow runs
@@ -171,7 +159,7 @@ jobs:
       uses: dev-drprasad/delete-older-releases@master
       if: env.UPLOAD_RELEASE == 'true' && !cancelled()
       with:
-        keep_latest: 5
+        keep_latest: 12
         delete_tags: true
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
